@@ -83,6 +83,16 @@ describe('DskVposClient.registerOrder', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('rejects with a TypeError, without calling fetch, when amountCents is negative', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await expect(
+      client.registerOrder({ orderNumber: 'inv-42', amountCents: -100, currency: '978', returnUrl: 'https://x' })
+    ).rejects.toThrow(TypeError);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('rejects with DskVposError when the request exceeds timeoutMs', async () => {
     const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
       return new Promise((_resolve, reject) => {
