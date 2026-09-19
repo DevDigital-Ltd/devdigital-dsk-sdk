@@ -9,10 +9,10 @@ export interface RegisterOrderParams {
   description?: string;
 }
 
-export interface RegisterOrderResult {
+export type RegisterOrderResult = {
   orderId: string;
   formUrl: string;
-}
+};
 
 export type DskOrderStatus = 'created' | 'preAuthorized' | 'charged' | 'other';
 
@@ -25,7 +25,7 @@ export interface PaymentAmountInfo {
   totalAmount: number;
 }
 
-export interface OrderStatusResult {
+export type OrderStatusResult = {
   orderNumber: string;
   orderStatus: number;
   status: DskOrderStatus;
@@ -34,7 +34,7 @@ export interface OrderStatusResult {
   amount: number;
   currency: string;
   paymentAmountInfo: PaymentAmountInfo;
-}
+};
 
 export interface GatewayAckResult {
   errorCode: string;
