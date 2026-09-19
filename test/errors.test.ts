@@ -35,4 +35,21 @@ describe('parseGatewayResponse', () => {
   it('throws DskVposError for an auth failure', () => {
     expect(() => parseGatewayResponse({ errorCode: '5', errorMessage: 'Access denied' })).toThrow('Access denied');
   });
+
+  it('returns the body when errorCode is the numeric 0', () => {
+    const body = { errorCode: 0, errorMessage: 'Success', orderStatus: 0 };
+    expect(parseGatewayResponse(body)).toBe(body);
+  });
+
+  it('throws DskVposError with a string errorCode when errorCode is a numeric non-zero value', () => {
+    const body = { errorCode: 7, errorMessage: 'Deposit is impossible for current transaction state' };
+    try {
+      parseGatewayResponse(body);
+      throw new Error('expected parseGatewayResponse to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(DskVposError);
+      expect((error as DskVposError).errorCode).toBe('7');
+      expect((error as DskVposError).message).toBe('Deposit is impossible for current transaction state');
+    }
+  });
 });

@@ -41,18 +41,33 @@ export class DskVposClient {
       if (value !== undefined) body.set(key, String(value));
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+      });
+    } catch (error) {
+      throw new DskVposError('network', error instanceof Error && error.message ? error.message : 'DSK VPOS gateway request failed');
+    }
 
     if (!response.ok) {
       throw new DskVposError(String(response.status), `DSK VPOS gateway returned HTTP ${response.status}`);
     }
 
-    const json = (await response.json()) as T & { errorCode?: string; errorMessage?: string };
-    return parseGatewayResponse(json);
+    let json: unknown;
+    try {
+      json = await response.json();
+    } catch {
+      throw new DskVposError('invalid_response', 'DSK VPOS gateway returned a response that was not valid JSON');
+    }
+
+    if (typeof json !== 'object' || json === null || Array.isArray(json)) {
+      throw new DskVposError('invalid_response', 'DSK VPOS gateway returned an unexpected response shape');
+    }
+
+    return parseGatewayResponse(json as T & { errorCode?: string; errorMessage?: string });
   }
 
   async registerOrder(params: RegisterOrderParams): Promise<RegisterOrderResult> {

@@ -11,8 +11,9 @@ export class DskVposError extends Error {
 export function parseGatewayResponse<T extends Record<string, unknown>>(
   body: T & { errorCode?: string; errorMessage?: string }
 ): T {
-  if (body.errorCode !== undefined && body.errorCode !== '0') {
-    throw new DskVposError(body.errorCode, body.errorMessage ?? 'Unknown DSK VPOS error');
+  const errorCode = body.errorCode === undefined ? undefined : String(body.errorCode);
+  if (errorCode !== undefined && errorCode !== '0') {
+    throw new DskVposError(errorCode, body.errorMessage ?? 'Unknown DSK VPOS error');
   }
   return body;
 }

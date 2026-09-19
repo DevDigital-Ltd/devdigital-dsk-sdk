@@ -49,6 +49,18 @@ if (status.status === 'charged') {
 }
 ```
 
+Any `status` other than `'charged'` or `'preAuthorized'` — including a
+declined or reversed authorization — comes back as `'other'`: this SDK
+doesn't assert meanings for order-status codes it hasn't independently
+verified against the live gateway. Treat anything that isn't `'charged'`
+after checking status as "not paid", and inspect the raw `orderStatus` /
+`actionCode` fields on the result if you need to distinguish why.
+
+The redirect flow's `returnUrl` is best-effort — a customer who pays and
+then closes their browser before being redirected back never hits it. A
+real integration should reconcile by polling `getOrderStatus` for orders
+left in `'created'`, rather than relying on the return URL alone.
+
 ## API
 
 - `new DskVposClient({ apiLogin, apiPassword, environment })`
@@ -57,6 +69,10 @@ if (status.status === 'charged') {
 - `capture(orderId, amountCents)`
 - `refund(orderId, amountCents)`
 - `reverse(orderId)`
+
+`reverse` cancels an authorization that hasn't been captured yet (a
+same-session cancellation); `refund` returns funds after a capture has
+already settled.
 
 All money amounts are integer minor units (cents). `currency` is a numeric
 ISO 4217 string (e.g. `"978"` for EUR).

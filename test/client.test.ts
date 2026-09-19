@@ -23,7 +23,7 @@ describe('DskVposClient.registerOrder', () => {
       formUrl: 'https://uat.dskbank.bg/payment/merchants/multiecom/payment.html?mdOrder=385aca7f-a29c-70ec-b71a-2d422efa1c13'
     });
 
-    const client = new DskVposClient({ apiLogin: 'devdigital-api', apiPassword: 'secret', environment: 'uat' });
+    const client = new DskVposClient({ apiLogin: 'test-login', apiPassword: 'secret', environment: 'uat' });
     const result = await client.registerOrder({
       orderNumber: 'inv-42',
       amountCents: 100,
@@ -37,7 +37,7 @@ describe('DskVposClient.registerOrder', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://uat.dskbank.bg/payment/rest/register.do');
     const body = init.body as URLSearchParams;
-    expect(body.get('userName')).toBe('devdigital-api');
+    expect(body.get('userName')).toBe('test-login');
     expect(body.get('password')).toBe('secret');
     expect(body.get('orderNumber')).toBe('inv-42');
     expect(body.get('amount')).toBe('100');
@@ -63,6 +63,38 @@ describe('DskVposClient.registerOrder', () => {
 
   it('throws DskVposError on a non-2xx HTTP response', async () => {
     mockFetchOnce({}, 500);
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await expect(
+      client.registerOrder({ orderNumber: 'inv-42', amountCents: 100, currency: '978', returnUrl: 'https://x' })
+    ).rejects.toThrow(DskVposError);
+  });
+
+  it('throws DskVposError, not a raw TypeError, when fetch rejects', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('network down'));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await expect(
+      client.registerOrder({ orderNumber: 'inv-42', amountCents: 100, currency: '978', returnUrl: 'https://x' })
+    ).rejects.toThrow(DskVposError);
+  });
+
+  it('throws DskVposError, not a raw SyntaxError, when the response body is not valid JSON', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => {
+        throw new SyntaxError('Unexpected token < in JSON at position 0');
+      }
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await expect(
+      client.registerOrder({ orderNumber: 'inv-42', amountCents: 100, currency: '978', returnUrl: 'https://x' })
+    ).rejects.toThrow(DskVposError);
+  });
+
+  it('throws DskVposError, not a raw TypeError, when the response body is null', async () => {
+    mockFetchOnce(null);
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
     await expect(
       client.registerOrder({ orderNumber: 'inv-42', amountCents: 100, currency: '978', returnUrl: 'https://x' })
