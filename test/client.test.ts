@@ -69,3 +69,42 @@ describe('DskVposClient.registerOrder', () => {
     ).rejects.toThrow(DskVposError);
   });
 });
+
+describe('DskVposClient.getOrderStatus', () => {
+  it('maps orderStatus to a friendly status', async () => {
+    mockFetchOnce({
+      errorCode: '0',
+      errorMessage: 'Success',
+      orderNumber: 'inv-42',
+      orderStatus: 0,
+      actionCode: -100,
+      actionCodeDescription: 'Waiting for payment attempt',
+      amount: 100,
+      currency: '978',
+      paymentAmountInfo: {
+        paymentState: 'CREATED',
+        approvedAmount: 0,
+        depositedAmount: 0,
+        refundedAmount: 0,
+        feeAmount: 0,
+        totalAmount: 100
+      }
+    });
+
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    const result = await client.getOrderStatus('385aca7f-a29c-70ec-b71a-2d422efa1c13');
+
+    expect(result.status).toBe('created');
+    expect(result.orderStatus).toBe(0);
+    expect(result.paymentAmountInfo.paymentState).toBe('CREATED');
+  });
+
+  it('maps orderStatus 1 and 2 to preAuthorized and charged', async () => {
+    mockFetchOnce({ errorCode: '0', errorMessage: 'Success', orderNumber: 'x', orderStatus: 1, actionCode: 0, actionCodeDescription: '', amount: 100, currency: '978', paymentAmountInfo: { paymentState: 'APPROVED', approvedAmount: 100, depositedAmount: 0, refundedAmount: 0, feeAmount: 0, totalAmount: 100 } });
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    expect((await client.getOrderStatus('x')).status).toBe('preAuthorized');
+
+    mockFetchOnce({ errorCode: '0', errorMessage: 'Success', orderNumber: 'x', orderStatus: 2, actionCode: 0, actionCodeDescription: '', amount: 100, currency: '978', paymentAmountInfo: { paymentState: 'DEPOSITED', approvedAmount: 100, depositedAmount: 100, refundedAmount: 0, feeAmount: 0, totalAmount: 100 } });
+    expect((await client.getOrderStatus('x')).status).toBe('charged');
+  });
+});

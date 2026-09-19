@@ -1,10 +1,17 @@
 import { DskVposError, parseGatewayResponse } from './errors.js';
-import type { DskVposEnvironment, RegisterOrderParams, RegisterOrderResult } from './types.js';
+import type { DskVposEnvironment, RegisterOrderParams, RegisterOrderResult, OrderStatusResult, DskOrderStatus } from './types.js';
 
 const BASE_URLS: Record<DskVposEnvironment, string> = {
   uat: 'https://uat.dskbank.bg/payment/rest/',
   production: 'https://epg.dskbank.bg/payment/rest/'
 };
+
+function toOrderStatus(orderStatus: number): DskOrderStatus {
+  if (orderStatus === 0) return 'created';
+  if (orderStatus === 1) return 'preAuthorized';
+  if (orderStatus === 2) return 'charged';
+  return 'other';
+}
 
 export interface DskVposClientOptions {
   apiLogin: string;
@@ -57,5 +64,10 @@ export class DskVposClient {
       failUrl: params.failUrl,
       description: params.description
     });
+  }
+
+  async getOrderStatus(orderId: string): Promise<OrderStatusResult> {
+    const raw = await this.call<Omit<OrderStatusResult, 'status'>>('getOrderStatusExtended.do', { orderId });
+    return { ...raw, status: toOrderStatus(raw.orderStatus) };
   }
 }
