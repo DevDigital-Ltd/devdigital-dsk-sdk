@@ -61,9 +61,38 @@ describe('DskVposClient.registerOrder', () => {
     ).rejects.toThrow(DskVposError);
   });
 
-  it('throws DskVposError on a non-2xx HTTP response', async () => {
+  it('throws DskVposError with an http_-prefixed errorCode on a non-2xx HTTP response', async () => {
     mockFetchOnce({}, 500);
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    try {
+      await client.registerOrder({ orderNumber: 'inv-42', amountCents: 100, currency: '978', returnUrl: 'https://x' });
+      throw new Error('expected registerOrder to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(DskVposError);
+      expect((error as DskVposError).errorCode).toBe('http_500');
+    }
+  });
+
+  it('rejects with a TypeError, without calling fetch, when amountCents is not a non-negative integer', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await expect(
+      client.registerOrder({ orderNumber: 'inv-42', amountCents: 19.99, currency: '978', returnUrl: 'https://x' })
+    ).rejects.toThrow(TypeError);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects with DskVposError when the request exceeds timeoutMs', async () => {
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(new DOMException('This operation was aborted', 'AbortError'));
+        });
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat', timeoutMs: 1 });
     await expect(
       client.registerOrder({ orderNumber: 'inv-42', amountCents: 100, currency: '978', returnUrl: 'https://x' })
     ).rejects.toThrow(DskVposError);
@@ -113,6 +142,8 @@ describe('DskVposClient.getOrderStatus', () => {
       actionCodeDescription: 'Waiting for payment attempt',
       amount: 100,
       currency: '978',
+      date: 1789806038586,
+      orderDescription: '',
       paymentAmountInfo: {
         paymentState: 'CREATED',
         approvedAmount: 0,
@@ -129,6 +160,8 @@ describe('DskVposClient.getOrderStatus', () => {
     expect(result.status).toBe('created');
     expect(result.orderStatus).toBe(0);
     expect(result.paymentAmountInfo.paymentState).toBe('CREATED');
+    expect(result.date).toBe(1789806038586);
+    expect(result.orderDescription).toBe('');
   });
 
   it('maps orderStatus 1 and 2 to preAuthorized and charged', async () => {
@@ -155,11 +188,27 @@ describe('DskVposClient capture/refund/reverse', () => {
     await expect(client.capture('order-1', 100)).rejects.toThrow('Deposit is impossible for current transaction state');
   });
 
+  it('capture rejects with a TypeError, without calling fetch, when amountCents is not a non-negative integer', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await expect(client.capture('order-1', 19.99)).rejects.toThrow(TypeError);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('refund posts to refund.do', async () => {
     const fetchMock = mockFetchOnce({ errorCode: '0', errorMessage: 'Success' });
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
     await client.refund('order-1', 50);
     expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe('https://uat.dskbank.bg/payment/rest/refund.do');
+  });
+
+  it('refund rejects with a TypeError, without calling fetch, when amountCents is not a non-negative integer', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await expect(client.refund('order-1', 19.99)).rejects.toThrow(TypeError);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('reverse posts to reverse.do', async () => {

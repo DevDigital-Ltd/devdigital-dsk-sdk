@@ -20,9 +20,14 @@
     "type": "git",
     "url": "https://github.com/DevDigital-Ltd/devdigital-dsk-sdk"
   },
+  "keywords": ["dsk", "dsk-bank", "vpos", "payment-gateway", "bulgaria", "ecommerce", "payments"],
+  "author": "DevDigital Ltd <hi@devdigital.bg>",
+  "homepage": "https://github.com/DevDigital-Ltd/devdigital-dsk-sdk#readme",
+  "bugs": "https://github.com/DevDigital-Ltd/devdigital-dsk-sdk/issues",
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build && npm test"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",

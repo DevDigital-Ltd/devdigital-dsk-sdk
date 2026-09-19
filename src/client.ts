@@ -17,17 +17,28 @@ export interface DskVposClientOptions {
   apiLogin: string;
   apiPassword: string;
   environment: DskVposEnvironment;
+  timeoutMs?: number;
 }
+
+const DEFAULT_TIMEOUT_MS = 30000;
 
 export class DskVposClient {
   private readonly apiLogin: string;
   private readonly apiPassword: string;
   private readonly baseUrl: string;
+  private readonly timeoutMs: number;
 
   constructor(options: DskVposClientOptions) {
     this.apiLogin = options.apiLogin;
     this.apiPassword = options.apiPassword;
     this.baseUrl = BASE_URLS[options.environment];
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  }
+
+  private assertNonNegativeInteger(value: number, paramName: string): void {
+    if (!Number.isInteger(value) || value < 0) {
+      throw new TypeError(`${paramName} must be a non-negative integer, got: ${value}`);
+    }
   }
 
   private async call<T extends Record<string, unknown>>(
@@ -46,14 +57,15 @@ export class DskVposClient {
       response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body
+        body,
+        signal: AbortSignal.timeout(this.timeoutMs)
       });
     } catch (error) {
       throw new DskVposError('network', error instanceof Error && error.message ? error.message : 'DSK VPOS gateway request failed');
     }
 
     if (!response.ok) {
-      throw new DskVposError(String(response.status), `DSK VPOS gateway returned HTTP ${response.status}`);
+      throw new DskVposError(`http_${response.status}`, `DSK VPOS gateway returned HTTP ${response.status}`);
     }
 
     let json: unknown;
@@ -71,6 +83,7 @@ export class DskVposClient {
   }
 
   async registerOrder(params: RegisterOrderParams): Promise<RegisterOrderResult> {
+    this.assertNonNegativeInteger(params.amountCents, 'amountCents');
     return this.call<RegisterOrderResult>('register.do', {
       orderNumber: params.orderNumber,
       amount: params.amountCents,
@@ -87,10 +100,12 @@ export class DskVposClient {
   }
 
   async capture(orderId: string, amountCents: number): Promise<GatewayAckResult> {
+    this.assertNonNegativeInteger(amountCents, 'amountCents');
     return this.call<GatewayAckResult>('deposit.do', { orderId, amount: amountCents });
   }
 
   async refund(orderId: string, amountCents: number): Promise<GatewayAckResult> {
+    this.assertNonNegativeInteger(amountCents, 'amountCents');
     return this.call<GatewayAckResult>('refund.do', { orderId, amount: amountCents });
   }
 

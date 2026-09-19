@@ -33,6 +33,8 @@ export type OrderStatusResult = {
   actionCodeDescription: string;
   amount: number;
   currency: string;
+  date: number;
+  orderDescription: string;
   paymentAmountInfo: PaymentAmountInfo;
 };
 
