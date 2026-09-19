@@ -36,7 +36,7 @@ export type OrderStatusResult = {
   paymentAmountInfo: PaymentAmountInfo;
 };
 
-export interface GatewayAckResult {
+export type GatewayAckResult = {
   errorCode: string;
   errorMessage: string;
-}
+};

@@ -1,5 +1,5 @@
 import { DskVposError, parseGatewayResponse } from './errors.js';
-import type { DskVposEnvironment, RegisterOrderParams, RegisterOrderResult, OrderStatusResult, DskOrderStatus } from './types.js';
+import type { DskVposEnvironment, RegisterOrderParams, RegisterOrderResult, OrderStatusResult, DskOrderStatus, GatewayAckResult } from './types.js';
 
 const BASE_URLS: Record<DskVposEnvironment, string> = {
   uat: 'https://uat.dskbank.bg/payment/rest/',
@@ -69,5 +69,17 @@ export class DskVposClient {
   async getOrderStatus(orderId: string): Promise<OrderStatusResult> {
     const raw = await this.call<Omit<OrderStatusResult, 'status'>>('getOrderStatusExtended.do', { orderId });
     return { ...raw, status: toOrderStatus(raw.orderStatus) };
+  }
+
+  async capture(orderId: string, amountCents: number): Promise<GatewayAckResult> {
+    return this.call<GatewayAckResult>('deposit.do', { orderId, amount: amountCents });
+  }
+
+  async refund(orderId: string, amountCents: number): Promise<GatewayAckResult> {
+    return this.call<GatewayAckResult>('refund.do', { orderId, amount: amountCents });
+  }
+
+  async reverse(orderId: string): Promise<GatewayAckResult> {
+    return this.call<GatewayAckResult>('reverse.do', { orderId });
   }
 }

@@ -108,3 +108,32 @@ describe('DskVposClient.getOrderStatus', () => {
     expect((await client.getOrderStatus('x')).status).toBe('charged');
   });
 });
+
+describe('DskVposClient capture/refund/reverse', () => {
+  it('capture posts to deposit.do', async () => {
+    const fetchMock = mockFetchOnce({ errorCode: '0', errorMessage: 'Success' });
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await client.capture('order-1', 100);
+    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe('https://uat.dskbank.bg/payment/rest/deposit.do');
+  });
+
+  it('capture throws DskVposError when the order is not in a capturable state', async () => {
+    mockFetchOnce({ errorCode: '7', errorMessage: 'Deposit is impossible for current transaction state' });
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await expect(client.capture('order-1', 100)).rejects.toThrow('Deposit is impossible for current transaction state');
+  });
+
+  it('refund posts to refund.do', async () => {
+    const fetchMock = mockFetchOnce({ errorCode: '0', errorMessage: 'Success' });
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await client.refund('order-1', 50);
+    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe('https://uat.dskbank.bg/payment/rest/refund.do');
+  });
+
+  it('reverse posts to reverse.do', async () => {
+    const fetchMock = mockFetchOnce({ errorCode: '0', errorMessage: 'Success' });
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await client.reverse('order-1');
+    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe('https://uat.dskbank.bg/payment/rest/reverse.do');
+  });
+});
