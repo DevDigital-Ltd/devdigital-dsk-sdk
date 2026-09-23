@@ -14,7 +14,7 @@ export type RegisterOrderResult = {
   formUrl: string;
 };
 
-export type DskOrderStatus = 'created' | 'preAuthorized' | 'charged' | 'other';
+export type DskOrderStatus = 'created' | 'preAuthorized' | 'charged' | 'refunded' | 'other';
 
 export interface PaymentAmountInfo {
   paymentState: string;

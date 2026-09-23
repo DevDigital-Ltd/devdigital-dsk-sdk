@@ -182,6 +182,12 @@ describe('DskVposClient.getOrderStatus', () => {
     mockFetchOnce({ errorCode: '0', errorMessage: 'Success', orderNumber: 'x', orderStatus: 2, actionCode: 0, actionCodeDescription: '', amount: 100, currency: '978', paymentAmountInfo: { paymentState: 'DEPOSITED', approvedAmount: 100, depositedAmount: 100, refundedAmount: 0, feeAmount: 0, totalAmount: 100 } });
     expect((await client.getOrderStatus('x')).status).toBe('charged');
   });
+
+  it('maps orderStatus 4 to refunded', async () => {
+    mockFetchOnce({ errorCode: '0', errorMessage: 'Success', orderNumber: 'x', orderStatus: 4, actionCode: 0, actionCodeDescription: '', amount: 100, currency: '978', paymentAmountInfo: { paymentState: 'REFUNDED', approvedAmount: 100, depositedAmount: 0, refundedAmount: 100, feeAmount: 0, totalAmount: 100 } });
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    expect((await client.getOrderStatus('x')).status).toBe('refunded');
+  });
 });
 
 describe('DskVposClient capture/refund/reverse', () => {

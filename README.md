@@ -49,8 +49,8 @@ if (status.status === 'charged') {
 }
 ```
 
-Any `status` other than `'charged'` or `'preAuthorized'` — including a
-declined or reversed authorization — comes back as `'other'`: this SDK
+Any `status` other than `'created'`, `'preAuthorized'`, `'charged'` or
+`'refunded'` — including a declined or reversed authorization — comes back as `'other'`: this SDK
 doesn't assert meanings for order-status codes it hasn't independently
 verified against the live gateway. Treat anything that isn't `'charged'`
 after checking status as "not paid", and inspect the raw `orderStatus` /

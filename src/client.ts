@@ -10,6 +10,7 @@ function toOrderStatus(orderStatus: number): DskOrderStatus {
   if (orderStatus === 0) return 'created';
   if (orderStatus === 1) return 'preAuthorized';
   if (orderStatus === 2) return 'charged';
+  if (orderStatus === 4) return 'refunded';
   return 'other';
 }
 
