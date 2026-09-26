@@ -42,3 +42,10 @@ export type GatewayAckResult = {
   errorCode: string;
   errorMessage: string;
 };
+
+export interface WaitForFinalStatusOptions {
+  /** Give up polling after this long and return the last status. Default 120000. */
+  timeoutMs?: number;
+  /** Delay between polls. Default 3000. */
+  intervalMs?: number;
+}

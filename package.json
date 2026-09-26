@@ -1,6 +1,6 @@
 {
   "name": "devdigital-dsk-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Unofficial TypeScript SDK for DSK Bank's VPOS e-commerce payment gateway (redirect flow)",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -13,14 +13,29 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
-  "engines": { "node": ">=18" },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/DevDigital-Ltd/devdigital-dsk-sdk"
   },
-  "keywords": ["dsk", "dsk-bank", "vpos", "payment-gateway", "bulgaria", "ecommerce", "payments"],
+  "keywords": [
+    "dsk",
+    "dsk-bank",
+    "vpos",
+    "payment-gateway",
+    "bulgaria",
+    "ecommerce",
+    "payments"
+  ],
   "author": "DevDigital Ltd <hi@devdigital.bg>",
   "homepage": "https://github.com/DevDigital-Ltd/devdigital-dsk-sdk#readme",
   "bugs": "https://github.com/DevDigital-Ltd/devdigital-dsk-sdk/issues",
@@ -28,13 +43,28 @@
     "build": "tsup src/index.ts --format esm,cjs --dts",
     "test": "vitest run",
     "prepare": "npm run build",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run typecheck && npm run lint && npm run build && npm test",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.7.5",
-    "typescript": "^5.6.3",
+    "@vitest/coverage-v8": "^2.1.9",
+    "dotenv": "^16.4.5",
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.9",
     "tsup": "^8.3.5",
-    "vitest": "^2.1.4",
-    "dotenv": "^16.4.5"
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^2.1.4"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

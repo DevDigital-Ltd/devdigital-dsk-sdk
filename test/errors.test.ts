@@ -5,7 +5,8 @@ describe('parseGatewayResponse', () => {
   it('returns the body when errorCode is absent', () => {
     const body = {
       orderId: '385aca7f-a29c-70ec-b71a-2d422efa1c13',
-      formUrl: 'https://uat.dskbank.bg/payment/merchants/multiecom/payment.html?mdOrder=385aca7f-a29c-70ec-b71a-2d422efa1c13'
+      formUrl:
+        'https://uat.dskbank.bg/payment/merchants/multiecom/payment.html?mdOrder=385aca7f-a29c-70ec-b71a-2d422efa1c13'
     };
     expect(parseGatewayResponse(body)).toBe(body);
   });

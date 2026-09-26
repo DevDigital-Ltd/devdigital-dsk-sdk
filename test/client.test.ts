@@ -20,7 +20,8 @@ describe('DskVposClient.registerOrder', () => {
   it('posts to the UAT base URL with credentials and order fields', async () => {
     const fetchMock = mockFetchOnce({
       orderId: '385aca7f-a29c-70ec-b71a-2d422efa1c13',
-      formUrl: 'https://uat.dskbank.bg/payment/merchants/multiecom/payment.html?mdOrder=385aca7f-a29c-70ec-b71a-2d422efa1c13'
+      formUrl:
+        'https://uat.dskbank.bg/payment/merchants/multiecom/payment.html?mdOrder=385aca7f-a29c-70ec-b71a-2d422efa1c13'
     });
 
     const client = new DskVposClient({ apiLogin: 'test-login', apiPassword: 'secret', environment: 'uat' });
@@ -47,14 +48,22 @@ describe('DskVposClient.registerOrder', () => {
   });
 
   it('posts to the production base URL when environment is production', async () => {
-    const fetchMock = mockFetchOnce({ orderId: 'x', formUrl: 'https://epg.dskbank.bg/payment/merchants/multiecom/payment.html?mdOrder=x' });
+    const fetchMock = mockFetchOnce({
+      orderId: 'x',
+      formUrl: 'https://epg.dskbank.bg/payment/merchants/multiecom/payment.html?mdOrder=x'
+    });
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'production' });
     await client.registerOrder({ orderNumber: 'o1', amountCents: 100, currency: '978', returnUrl: 'https://x' });
-    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe('https://epg.dskbank.bg/payment/rest/register.do');
+    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe(
+      'https://epg.dskbank.bg/payment/rest/register.do'
+    );
   });
 
   it('throws DskVposError on a gateway business error', async () => {
-    mockFetchOnce({ errorCode: '1', errorMessage: 'Order number is duplicated, order with given order number is processed already' });
+    mockFetchOnce({
+      errorCode: '1',
+      errorMessage: 'Order number is duplicated, order with given order number is processed already'
+    });
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
     await expect(
       client.registerOrder({ orderNumber: 'inv-42', amountCents: 100, currency: '978', returnUrl: 'https://x' })
@@ -175,16 +184,67 @@ describe('DskVposClient.getOrderStatus', () => {
   });
 
   it('maps orderStatus 1 and 2 to preAuthorized and charged', async () => {
-    mockFetchOnce({ errorCode: '0', errorMessage: 'Success', orderNumber: 'x', orderStatus: 1, actionCode: 0, actionCodeDescription: '', amount: 100, currency: '978', paymentAmountInfo: { paymentState: 'APPROVED', approvedAmount: 100, depositedAmount: 0, refundedAmount: 0, feeAmount: 0, totalAmount: 100 } });
+    mockFetchOnce({
+      errorCode: '0',
+      errorMessage: 'Success',
+      orderNumber: 'x',
+      orderStatus: 1,
+      actionCode: 0,
+      actionCodeDescription: '',
+      amount: 100,
+      currency: '978',
+      paymentAmountInfo: {
+        paymentState: 'APPROVED',
+        approvedAmount: 100,
+        depositedAmount: 0,
+        refundedAmount: 0,
+        feeAmount: 0,
+        totalAmount: 100
+      }
+    });
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
     expect((await client.getOrderStatus('x')).status).toBe('preAuthorized');
 
-    mockFetchOnce({ errorCode: '0', errorMessage: 'Success', orderNumber: 'x', orderStatus: 2, actionCode: 0, actionCodeDescription: '', amount: 100, currency: '978', paymentAmountInfo: { paymentState: 'DEPOSITED', approvedAmount: 100, depositedAmount: 100, refundedAmount: 0, feeAmount: 0, totalAmount: 100 } });
+    mockFetchOnce({
+      errorCode: '0',
+      errorMessage: 'Success',
+      orderNumber: 'x',
+      orderStatus: 2,
+      actionCode: 0,
+      actionCodeDescription: '',
+      amount: 100,
+      currency: '978',
+      paymentAmountInfo: {
+        paymentState: 'DEPOSITED',
+        approvedAmount: 100,
+        depositedAmount: 100,
+        refundedAmount: 0,
+        feeAmount: 0,
+        totalAmount: 100
+      }
+    });
     expect((await client.getOrderStatus('x')).status).toBe('charged');
   });
 
   it('maps orderStatus 4 to refunded', async () => {
-    mockFetchOnce({ errorCode: '0', errorMessage: 'Success', orderNumber: 'x', orderStatus: 4, actionCode: 0, actionCodeDescription: '', amount: 100, currency: '978', paymentAmountInfo: { paymentState: 'REFUNDED', approvedAmount: 100, depositedAmount: 0, refundedAmount: 100, feeAmount: 0, totalAmount: 100 } });
+    mockFetchOnce({
+      errorCode: '0',
+      errorMessage: 'Success',
+      orderNumber: 'x',
+      orderStatus: 4,
+      actionCode: 0,
+      actionCodeDescription: '',
+      amount: 100,
+      currency: '978',
+      paymentAmountInfo: {
+        paymentState: 'REFUNDED',
+        approvedAmount: 100,
+        depositedAmount: 0,
+        refundedAmount: 100,
+        feeAmount: 0,
+        totalAmount: 100
+      }
+    });
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
     expect((await client.getOrderStatus('x')).status).toBe('refunded');
   });
@@ -195,7 +255,9 @@ describe('DskVposClient capture/refund/reverse', () => {
     const fetchMock = mockFetchOnce({ errorCode: '0', errorMessage: 'Success' });
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
     await client.capture('order-1', 100);
-    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe('https://uat.dskbank.bg/payment/rest/deposit.do');
+    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe(
+      'https://uat.dskbank.bg/payment/rest/deposit.do'
+    );
   });
 
   it('capture throws DskVposError when the order is not in a capturable state', async () => {
@@ -231,6 +293,8 @@ describe('DskVposClient capture/refund/reverse', () => {
     const fetchMock = mockFetchOnce({ errorCode: '0', errorMessage: 'Success' });
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
     await client.reverse('order-1');
-    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe('https://uat.dskbank.bg/payment/rest/reverse.do');
+    expect((fetchMock.mock.calls[0] as [string, RequestInit])[0]).toBe(
+      'https://uat.dskbank.bg/payment/rest/reverse.do'
+    );
   });
 });
