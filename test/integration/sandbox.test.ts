@@ -5,7 +5,12 @@ const apiLogin = process.env.DSK_VPOS_TEST_API_LOGIN;
 const apiPassword = process.env.DSK_VPOS_TEST_API_PASSWORD;
 
 describe.skipIf(!apiLogin || !apiPassword)('DskVposClient against the real UAT sandbox', () => {
-  const client = new DskVposClient({ apiLogin: apiLogin ?? '', apiPassword: apiPassword ?? '', environment: 'uat' });
+  const client = new DskVposClient({
+    // describe bodies still run when the suite is skipped, so never pass empty credentials
+    apiLogin: apiLogin || 'skipped',
+    apiPassword: apiPassword || 'skipped',
+    environment: 'uat'
+  });
 
   it('registers an order and reads back its created status', async () => {
     const orderNumber = `sdk-test-${Date.now()}`;

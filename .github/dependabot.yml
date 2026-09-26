@@ -3,6 +3,13 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly }
+    ignore:
+      # keep Node typings aligned with the oldest supported runtime (engines >=18, CI runs 18/20/22)
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+    groups:
+      vitest:
+        patterns: ['vitest', '@vitest/*']
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
