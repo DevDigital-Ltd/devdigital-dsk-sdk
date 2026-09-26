@@ -118,6 +118,41 @@ describe('waitForFinalStatus', () => {
     });
     expect(result.status).toBe('created');
   });
+
+  it('rejects with the abort reason when the signal aborts during polling', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok(STATUS_CREATED));
+    const controller = new AbortController();
+    const promise = make(fetchMock as unknown as typeof fetch).waitForFinalStatus('x', {
+      intervalMs: 1000,
+      timeoutMs: 60000,
+      signal: controller.signal
+    });
+    setTimeout(() => controller.abort(new Error('stop')), 10);
+    await expect(promise).rejects.toThrow('stop');
+  });
+
+  it('rejects immediately when the signal is already aborted', async () => {
+    const fetchMock = vi.fn();
+    const controller = new AbortController();
+    controller.abort(new Error('already'));
+    await expect(
+      make(fetchMock as unknown as typeof fetch).waitForFinalStatus('x', { signal: controller.signal })
+    ).rejects.toThrow('already');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('logger', () => {
+  it('does not change the result of a successful call when the logger throws', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ errorCode: '0', errorMessage: 'Success' }));
+    const client = make(fetchMock as unknown as typeof fetch, {
+      logger: () => {
+        throw new Error('logger boom');
+      }
+    });
+    await expect(client.capture('order-1', 100)).resolves.toMatchObject({ errorCode: '0' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('input validation', () => {

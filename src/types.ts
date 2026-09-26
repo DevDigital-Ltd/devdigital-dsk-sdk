@@ -48,4 +48,6 @@ export interface WaitForFinalStatusOptions {
   timeoutMs?: number;
   /** Delay between polls. Default 3000. */
   intervalMs?: number;
+  /** Abort polling. The returned promise rejects with the signal's reason. */
+  signal?: AbortSignal;
 }

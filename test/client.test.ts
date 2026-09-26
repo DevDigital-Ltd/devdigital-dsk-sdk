@@ -82,12 +82,22 @@ describe('DskVposClient.registerOrder', () => {
     }
   });
 
-  it('rejects with a TypeError, without calling fetch, when amountCents is not a non-negative integer', async () => {
+  it('rejects with a TypeError, without calling fetch, when amountCents is not an integer', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
     await expect(
       client.registerOrder({ orderNumber: 'inv-42', amountCents: 19.99, currency: '978', returnUrl: 'https://x' })
+    ).rejects.toThrow(TypeError);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects with a TypeError, without calling fetch, when amountCents is zero', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    await expect(
+      client.registerOrder({ orderNumber: 'inv-42', amountCents: 0, currency: '978', returnUrl: 'https://x' })
     ).rejects.toThrow(TypeError);
     expect(fetchMock).not.toHaveBeenCalled();
   });

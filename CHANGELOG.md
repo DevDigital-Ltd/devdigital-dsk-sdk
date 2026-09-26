@@ -16,9 +16,14 @@ All notable changes to this project are documented here. The format follows
 - `appInfo` option and a `User-Agent` header identifying the SDK version.
 - Input validation for `orderNumber`, `orderId`, `currency` (ISO 4217 numeric) and `returnUrl`/`failUrl`, plus credential and `environment` checks at construction.
 - Exported `VERSION` constant.
+- `waitForFinalStatus` accepts an `AbortSignal` (`signal`) to cancel polling.
+- Coverage thresholds enforced in CI.
 
 ### Changed
 
+- `registerOrder` now rejects `amountCents` of `0` (must be a positive integer). `capture` and `refund` still accept `0`.
+- A throwing `logger` no longer affects the outcome of a gateway call.
+- Package `exports` declare separate types for ESM (`.d.ts`) and CJS (`.d.cts`).
 - Credentials are held in private fields, so they do not appear in `JSON.stringify`, `console.log` or `util.inspect` output.
 - Money-moving calls (`registerOrder`, `capture`, `refund`, `reverse`) are explicitly never retried automatically.
 

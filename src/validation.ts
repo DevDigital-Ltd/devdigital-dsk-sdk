@@ -10,6 +10,12 @@ export function assertNonNegativeInteger(value: unknown, paramName: string): ass
   }
 }
 
+export function assertPositiveInteger(value: unknown, paramName: string): asserts value is number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) {
+    throw new TypeError(`${paramName} must be a positive integer, got: ${String(value)}`);
+  }
+}
+
 export function assertCurrency(value: unknown): asserts value is string {
   if (typeof value !== 'string' || !/^\d{3}$/.test(value)) {
     throw new TypeError(`currency must be a numeric ISO 4217 code such as "978", got: ${String(value)}`);
