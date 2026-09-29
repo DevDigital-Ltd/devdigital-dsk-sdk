@@ -4,3 +4,5 @@ dist
 !.env.example
 coverage
 *.tsbuildinfo
+uat-test-run.txt
+uat-evidence.md
