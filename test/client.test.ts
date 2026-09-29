@@ -258,6 +258,55 @@ describe('DskVposClient.getOrderStatus', () => {
     const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
     expect((await client.getOrderStatus('x')).status).toBe('refunded');
   });
+
+  it.each([
+    [3, 'REVERSED', 'reversed'],
+    [6, 'DECLINED', 'declined']
+  ])('maps orderStatus %i to %s', async (orderStatus, paymentState, expected) => {
+    mockFetchOnce({
+      errorCode: '0',
+      errorMessage: 'Success',
+      orderNumber: 'x',
+      orderStatus,
+      actionCode: orderStatus === 6 ? 71015 : 0,
+      actionCodeDescription: '',
+      amount: 100,
+      currency: '978',
+      paymentAmountInfo: {
+        paymentState,
+        approvedAmount: 0,
+        depositedAmount: 0,
+        refundedAmount: 0,
+        feeAmount: 0,
+        totalAmount: 100
+      }
+    });
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    expect((await client.getOrderStatus('x')).status).toBe(expected);
+  });
+
+  it('maps an unknown orderStatus to other', async () => {
+    mockFetchOnce({
+      errorCode: '0',
+      errorMessage: 'Success',
+      orderNumber: 'x',
+      orderStatus: 5,
+      actionCode: 0,
+      actionCodeDescription: '',
+      amount: 100,
+      currency: '978',
+      paymentAmountInfo: {
+        paymentState: 'UNKNOWN',
+        approvedAmount: 0,
+        depositedAmount: 0,
+        refundedAmount: 0,
+        feeAmount: 0,
+        totalAmount: 100
+      }
+    });
+    const client = new DskVposClient({ apiLogin: 'a', apiPassword: 'b', environment: 'uat' });
+    expect((await client.getOrderStatus('x')).status).toBe('other');
+  });
 });
 
 describe('DskVposClient capture/refund/reverse', () => {

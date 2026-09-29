@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- `getOrderStatus` reports `reversed` (`orderStatus` 3) and `declined` (`orderStatus` 6) instead of `other`. Both were verified against the live UAT gateway. Code with an exhaustive `switch` over `DskOrderStatus` needs two new cases.
+
+### Added
+
+- Integration tests for the full paid lifecycle on UAT: payment, partial and full refund, reverse, declines.
+
 ## [0.2.0]
 
 ### Added
