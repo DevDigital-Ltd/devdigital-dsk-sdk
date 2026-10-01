@@ -28,7 +28,7 @@ because no Node.js/TypeScript SDK existed for this API.
 ## Features
 
 - Full order lifecycle: register, check status, capture, refund, reverse.
-- **Redirect flow**: card data is entered on DSK's hosted page and never reaches your server (no PCI DSS scope for your app).
+- **Redirect flow**: card data is entered on DSK's hosted page and never reaches your server, which keeps your application's PCI DSS scope to a minimum.
 - Typed errors (`DskVposError`) with DSK's own error codes, HTTP status, endpoint and original cause.
 - Automatic retries with backoff for safe read calls. Money-moving calls are never retried blindly.
 - Input validation before any request is sent.

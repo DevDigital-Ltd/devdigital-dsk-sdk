@@ -8,10 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- README wording about PCI DSS scope is more precise.
 - `getOrderStatus` reports `reversed` (`orderStatus` 3) and `declined` (`orderStatus` 6) instead of `other`. Both were verified against the live UAT gateway. Code with an exhaustive `switch` over `DskOrderStatus` needs two new cases.
 
 ### Added
 
+- `scripts/production-smoke-test.mjs`: manual end-to-end check with a real card (register, pay in the browser, verify status, optional refund).
 - Integration tests for the full paid lifecycle on UAT: payment, partial and full refund, reverse, declines.
 
 ## [0.2.0]
