@@ -8,7 +8,13 @@ import type {
   GatewayAckResult,
   WaitForFinalStatusOptions
 } from './types.js';
-import { assertCurrency, assertHttpUrl, assertNonEmptyString, assertNonNegativeInteger } from './validation.js';
+import {
+  assertCurrency,
+  assertHttpUrl,
+  assertNonEmptyString,
+  assertNonNegativeInteger,
+  assertPositiveInteger
+} from './validation.js';
 import { VERSION } from './version.js';
 
 const BASE_URLS: Record<DskVposEnvironment, string> = {
@@ -20,7 +26,9 @@ function toOrderStatus(orderStatus: number): DskOrderStatus {
   if (orderStatus === 0) return 'created';
   if (orderStatus === 1) return 'preAuthorized';
   if (orderStatus === 2) return 'charged';
+  if (orderStatus === 3) return 'reversed';
   if (orderStatus === 4) return 'refunded';
+  if (orderStatus === 6) return 'declined';
   return 'other';
 }
 
@@ -66,7 +74,19 @@ function isTimeout(error: unknown): boolean {
   return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
 }
 
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
 
 export class DskVposClient {
   readonly #apiLogin: string;
@@ -97,6 +117,14 @@ export class DskVposClient {
       ? ` ${options.appInfo.name}${options.appInfo.version ? `/${options.appInfo.version}` : ''}`
       : '';
     this.#userAgent = `devdigital-dsk-sdk/${VERSION}${app}`;
+  }
+
+  private log(event: DskVposLogEvent): void {
+    try {
+      this.#logger?.(event);
+    } catch {
+      // A faulty logger must never change the outcome of a gateway call.
+    }
   }
 
   private async callOnce<T extends Record<string, unknown>>(
@@ -165,11 +193,11 @@ export class DskVposClient {
       const startedAt = Date.now();
       try {
         const result = await this.callOnce<T>(endpoint, params);
-        this.#logger?.({ endpoint, attempt, durationMs: Date.now() - startedAt, outcome: 'ok' });
+        this.log({ endpoint, attempt, durationMs: Date.now() - startedAt, outcome: 'ok' });
         return result;
       } catch (error) {
         const dskError = error instanceof DskVposError ? error : undefined;
-        this.#logger?.({
+        this.log({
           endpoint,
           attempt,
           durationMs: Date.now() - startedAt,
@@ -186,7 +214,7 @@ export class DskVposClient {
 
   async registerOrder(params: RegisterOrderParams): Promise<RegisterOrderResult> {
     assertNonEmptyString(params.orderNumber, 'orderNumber');
-    assertNonNegativeInteger(params.amountCents, 'amountCents');
+    assertPositiveInteger(params.amountCents, 'amountCents');
     assertCurrency(params.currency);
     assertHttpUrl(params.returnUrl, 'returnUrl');
     if (params.failUrl !== undefined) assertHttpUrl(params.failUrl, 'failUrl');
@@ -209,14 +237,16 @@ export class DskVposClient {
   /**
    * Polls getOrderStatus until the order leaves 'created' or timeoutMs elapses.
    * On timeout it resolves with the last status ('created'); it does not throw.
+   * Pass `signal` to cancel polling; the promise then rejects with the signal's reason.
    */
   async waitForFinalStatus(orderId: string, options: WaitForFinalStatusOptions = {}): Promise<OrderStatusResult> {
-    const { timeoutMs = 120000, intervalMs = 3000 } = options;
+    const { timeoutMs = 120000, intervalMs = 3000, signal } = options;
     const deadline = Date.now() + timeoutMs;
     for (;;) {
+      signal?.throwIfAborted();
       const result = await this.getOrderStatus(orderId);
       if (result.status !== 'created' || Date.now() + intervalMs > deadline) return result;
-      await sleep(intervalMs);
+      await sleep(intervalMs, signal);
     }
   }
 

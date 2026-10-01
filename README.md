@@ -123,13 +123,15 @@ minutes, and fulfil or cancel it from the result.
 
 `getOrderStatus` returns the raw gateway fields plus a friendly `status`:
 
-| `orderStatus` | `status`        | Meaning                           | What to do                                                                          |
-| ------------- | --------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
-| `0`           | `created`       | Registered, no payment finished   | Wait, or reconcile later. Do not fulfil.                                            |
-| `1`           | `preAuthorized` | Funds held, not yet captured      | `capture` to take the money, or `reverse` to release it                             |
-| `2`           | `charged`       | Payment completed                 | Fulfil the order                                                                    |
-| `4`           | `refunded`      | Refunded after capture            | Mark the order refunded                                                             |
-| anything else | `other`         | Declined, reversed, or unverified | Treat as **not paid**; inspect `orderStatus`, `actionCode`, `actionCodeDescription` |
+| `orderStatus` | `status`        | Meaning                           | What to do                                                                           |
+| ------------- | --------------- | --------------------------------- | ------------------------------------------------------------------------------------ |
+| `0`           | `created`       | Registered, no payment finished   | Wait, or reconcile later. Do not fulfil.                                             |
+| `1`           | `preAuthorized` | Funds held, not yet captured      | `capture` to take the money, or `reverse` to release it                              |
+| `2`           | `charged`       | Payment completed                 | Fulfil the order                                                                     |
+| `3`           | `reversed`      | Authorization or payment reversed | Mark the order cancelled                                                             |
+| `4`           | `refunded`      | Refunded after capture            | Mark the order refunded (partial refunds also report `4`; check `paymentAmountInfo`) |
+| `6`           | `declined`      | Payment declined                  | Treat as **not paid**; inspect `actionCode` (for example `71015`, input error)       |
+| anything else | `other`         | Unverified                        | Treat as **not paid**; inspect `orderStatus`, `actionCode`, `actionCodeDescription`  |
 
 The SDK only assigns meanings to codes that were verified against the live UAT gateway. Everything else
 comes back as `other` with the raw fields intact, so you never act on a guess.

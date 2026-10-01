@@ -14,7 +14,7 @@ export type RegisterOrderResult = {
   formUrl: string;
 };
 
-export type DskOrderStatus = 'created' | 'preAuthorized' | 'charged' | 'refunded' | 'other';
+export type DskOrderStatus = 'created' | 'preAuthorized' | 'charged' | 'reversed' | 'refunded' | 'declined' | 'other';
 
 export interface PaymentAmountInfo {
   paymentState: string;
@@ -48,4 +48,6 @@ export interface WaitForFinalStatusOptions {
   timeoutMs?: number;
   /** Delay between polls. Default 3000. */
   intervalMs?: number;
+  /** Abort polling. The returned promise rejects with the signal's reason. */
+  signal?: AbortSignal;
 }

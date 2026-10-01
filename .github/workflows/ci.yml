@@ -26,7 +26,7 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm run build
-      - run: npm test
+      - run: npm run test:coverage
         env:
           DSK_VPOS_TEST_API_LOGIN: ${{ secrets.DSK_VPOS_TEST_API_LOGIN }}
           DSK_VPOS_TEST_API_PASSWORD: ${{ secrets.DSK_VPOS_TEST_API_PASSWORD }}
